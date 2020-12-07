@@ -16,9 +16,10 @@ def main():
 
     if token:
         sp = spotipy.Spotify(auth=token)
+        user = sp.me()
         tracks = get_top_tracks(sp, 'medium_term')
 
-        print('\nTop tracks for user ' + USERNAME + ' for the past six months:\n')
+        print('\nTop tracks for ' + user['display_name'] + ' for the past six months:\n')
 
         for item in tracks:
             artist_string = ''
