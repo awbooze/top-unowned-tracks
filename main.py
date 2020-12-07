@@ -1,25 +1,66 @@
 from config import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, USERNAME
-import spotipy
-import spotipy.util as util
+import getopt, sys
+import spotipy, spotipy.util as util
 
 SCOPE = 'user-top-read'
 
-def get_top_tracks(spotify, time_range):
-    results = spotify.current_user_top_tracks(limit=50, time_range=time_range)
+def get_top_tracks(spotify, term):
+    results = spotify.current_user_top_tracks(limit=50, time_range=term)
     results_list = sorted(results['items'], key=lambda item: item['popularity'], 
             reverse=True)
     return results_list
 
-def main():
+def print_help_and_exit(error):
+    print('\nUsage: main.py <term>')
+    print("Available <term> values: '--short' or '-s', '--medium' or '-m', " + 
+            "'--long' or '-l'. Defaults to medium.")
+
+    if error:
+        sys.exit(1)
+    else:
+        sys.exit(0)
+
+def main(argv):
+    # Parse arguments
+    try:
+        opts, args = getopt.getopt(argv, 'hsml', ['help','short','medium','long'])
+    except getopt.GetoptError:
+        print_help_and_exit(True)
+
+    # Determine time range. Defaults to medium.
+    # Term length described here: https://developer.spotify.com/documentation/web-api/reference/personalization/get-users-top-artists-and-tracks/
+    term = 'medium_term'
+
+    for opt, arg in opts:
+        if opt in ('-h', '--help'):
+            print_help_and_exit(False)
+        elif opt in ('-s', '--short'):
+            term = 'short_term'
+        elif opt in ('-l', '--long'):
+            term = 'long_term'
+        elif opt not in ('-m', '--medium'):
+            print_help_and_exit(False)
+
+    # Get Spotify token
     token = util.prompt_for_user_token(USERNAME, SCOPE, CLIENT_ID, CLIENT_SECRET, 
         REDIRECT_URI)
 
     if token:
+        # Create objects
         sp = spotipy.Spotify(auth=token)
         user = sp.me()
-        tracks = get_top_tracks(sp, 'medium_term')
+        tracks = get_top_tracks(sp, term)
 
-        print('\nTop tracks for ' + user['display_name'] + ' for the past six months:\n')
+        # Print results
+        header = '\nTop tracks for ' + user['display_name'] + ' during the past '
+        if term == 'short_term':
+            header += 'four weeks'
+        elif term == 'medium_term':
+            header += 'six months'
+        elif term == 'long_term':
+            header += 'several years'
+        header += ':\n'
+        print(header)
 
         for item in tracks:
             artist_string = ''
@@ -37,4 +78,4 @@ def main():
         print("Can't get token for", USERNAME)
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
