@@ -137,10 +137,12 @@ dmypy.json
 # pytype static type analyzer
 .pytype/
 
+# End of https://www.toptal.com/developers/gitignore/api/python
+
+# Start additions to generated gitignore
 # Project Environment file
 config.py
 
 # Spotipy cache
 .cache-*
-
-# End of https://www.toptal.com/developers/gitignore/api/python
+# End additions
